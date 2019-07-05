@@ -69,6 +69,10 @@ def _load_config(robot_path):
     config_obj.setdefault("pyfrc", {})
 
     config_obj["pyfrc"].setdefault("robot", {})
+
+    # Determine type of simulation
+    config_obj["pyfrc"]["sim_type"].setdefault("sim_type", "top")
+
     config_obj["pyfrc"]["robot"].setdefault("w", 2)
 
     # switched from 'h' to 'l' in 2018, but keeping it there for legacy reasons
