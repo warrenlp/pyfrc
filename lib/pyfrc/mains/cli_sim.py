@@ -46,6 +46,8 @@ class PyFrcSim:
         _load_config(robot_path)
         config_obj = config.config_obj
 
+        sim.ui.configure_simulation_type(config_obj)
+
         sim.ui.configure_starting_position(config_obj)
 
         fake_time = sim.FakeRealTime()

@@ -125,16 +125,18 @@ class PhysicsInterface:
         self.last_tm = None
         self._lock = threading.Lock()
 
+        sim_type = config_obj["pyfrc"]["sim_type"]
+
         # These are in units of feet relative to the field
-        self.start_x = config_obj["pyfrc"]["robot"]["starting_x"]
-        self.start_y = config_obj["pyfrc"]["robot"]["starting_y"]
-        self.start_angle = math.radians(config_obj["pyfrc"]["robot"]["starting_angle"])
+        self.start_x = config_obj["pyfrc"][sim_type]["robot"]["starting_x"]
+        self.start_y = config_obj["pyfrc"][sim_type]["robot"]["starting_y"]
+        self.start_angle = math.radians(config_obj["pyfrc"][sim_type]["robot"]["starting_angle"])
         self.x = self.start_x
         self.y = self.start_y
         self.angle = self.start_angle
 
-        self.robot_w = config_obj["pyfrc"]["robot"]["w"]
-        self.robot_l = config_obj["pyfrc"]["robot"]["l"]
+        self.robot_w = config_obj["pyfrc"][sim_type]["robot"]["w"]
+        self.robot_l = config_obj["pyfrc"][sim_type]["robot"]["l"]
 
         # HACK: Used for drawing
         self.vx = 0

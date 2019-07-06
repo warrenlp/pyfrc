@@ -22,16 +22,18 @@ class RobotField(object):
         self.manager = manager
         self.elements = []  # robots, walls, missles, etc
 
+        sim_type = config_obj["pyfrc"]["sim_type"]
+
         field_size = (
-            config_obj["pyfrc"]["field"]["w"],
-            config_obj["pyfrc"]["field"]["h"],
+            config_obj["pyfrc"][sim_type]["field"]["w"],
+            config_obj["pyfrc"][sim_type]["field"]["h"],
         )
-        px_per_ft = config_obj["pyfrc"]["field"]["px_per_ft"]
+        px_per_ft = config_obj["pyfrc"][sim_type]["field"]["px_per_ft"]
 
         # setup board characteristics -- cell size is 1ft
         self.cols, self.rows = field_size
         self.margin = 5
-        self.objects = config_obj["pyfrc"]["field"]["objects"]
+        self.objects = config_obj["pyfrc"][sim_type]["field"]["objects"]
         self.cellSize = px_per_ft
         self.px_per_ft = px_per_ft
 
@@ -53,8 +55,10 @@ class RobotField(object):
 
     def _load_field_elements(self, px_per_ft, config_obj):
 
+        sim_type = config_obj["pyfrc"]["sim_type"]
+
         # custom image
-        image_path = config_obj["pyfrc"]["field"]["image"]
+        image_path = config_obj["pyfrc"][sim_type]["field"]["image"]
 
         if image_path and exists(image_path):
             self.photo = PhotoImage(file=image_path)

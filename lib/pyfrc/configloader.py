@@ -68,68 +68,71 @@ def _load_config(robot_path):
     # setup defaults
     config_obj.setdefault("pyfrc", {})
 
-    config_obj["pyfrc"].setdefault("robot", {})
-
     # Determine type of simulation
-    config_obj["pyfrc"]["sim_type"].setdefault("sim_type", "top")
+    config_obj["pyfrc"].setdefault("sim_types", ["top"])
 
-    config_obj["pyfrc"]["robot"].setdefault("w", 2)
+    # Setting up multiple simulation types allows us to have multiple, simultaneous simulation configurations.
+    for sim_type in config_obj["pyfrc"]["sim_types"]:
+        config_obj["pyfrc"].setdefault(sim_type, {})
+        config_obj["pyfrc"][sim_type].setdefault("robot", {})
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("w", 2)
+        l = config_obj["pyfrc"][sim_type]["robot"].get("h", 3)
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("l", l)
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("starting_x", 0)
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("starting_y", 0)
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("starting_angle", 0)
 
-    # switched from 'h' to 'l' in 2018, but keeping it there for legacy reasons
-    l = config_obj["pyfrc"]["robot"].get("h", 3)
-    config_obj["pyfrc"]["robot"].setdefault("l", l)
+        # list of dictionaries of x=, y=, angle=, name=
+        config_obj["pyfrc"][sim_type]["robot"].setdefault("start_positions", [])
 
-    config_obj["pyfrc"]["robot"].setdefault("starting_x", 0)
-    config_obj["pyfrc"]["robot"].setdefault("starting_y", 0)
-    config_obj["pyfrc"]["robot"].setdefault("starting_angle", 0)
+        field = config_obj["pyfrc"][sim_type].setdefault("field", {})
+        force_defaults = False
 
-    # list of dictionaries of x=, y=, angle=, name=
-    config_obj["pyfrc"]["robot"].setdefault("start_positions", [])
+        # These defaults mostly make sense for the "top" simulation, but they work for both.
 
-    field = config_obj["pyfrc"].setdefault("field", {})
-    force_defaults = False
+        # The rules here are complex because of backwards compat
+        # -> if you specify a particular season, then it will override w/h/px
+        # -> if you specify objects then you will get your own stuff
+        # -> if you don't specify anything then it override w/h/px
+        #    -> if you add your own, it will warn you unless you specify an image
 
-    # The rules here are complex because of backwards compat
-    # -> if you specify a particular season, then it will override w/h/px
-    # -> if you specify objects then you will get your own stuff
-    # -> if you don't specify anything then it override w/h/px
-    #    -> if you add your own, it will warn you unless you specify an image
-
-    # backwards compat
-    if "season" in config_obj["pyfrc"]["field"]:
-        season = config_obj["pyfrc"]["field"]["season"]
-        defaults = _field_defaults.get(str(season), _field_defaults["default"])
-        force_defaults = True
-    elif "objects" in config_obj["pyfrc"]["field"]:
-        defaults = _field_defaults["default"]
-    else:
-        if "image" not in field:
+        # backwards compat
+        if "season" in config_obj["pyfrc"][sim_type]["field"]:
+            season = config_obj["pyfrc"][sim_type]["field"]["season"]
+            defaults = _field_defaults.get(str(season), _field_defaults["default"])
             force_defaults = True
-        defaults = _field_defaults[_default_year]
+        elif "objects" in config_obj["pyfrc"][sim_type]["field"]:
+            defaults = _field_defaults["default"]
+        else:
+            if "image" not in field:
+                force_defaults = True
+            defaults = _field_defaults[_default_year]
 
-    if force_defaults:
-        if "w" in field or "h" in field or "px_per_ft" in field:
-            logger.warning("Ignoring field w/h/px_per_ft settings")
-        field["w"] = defaults["w"]
-        field["h"] = defaults["h"]
-        field["px_per_ft"] = defaults["px_per_ft"]
+        if force_defaults:
+            if "w" in field or "h" in field or "px_per_ft" in field:
+                logger.warning("Ignoring field w/h/px_per_ft settings")
+            field["w"] = defaults["w"]
+            field["h"] = defaults["h"]
+            field["px_per_ft"] = defaults["px_per_ft"]
 
-    config_obj["pyfrc"]["field"].setdefault("objects", [])
-    config_obj["pyfrc"]["field"].setdefault("w", defaults["w"])
-    config_obj["pyfrc"]["field"].setdefault("h", defaults["h"])
-    config_obj["pyfrc"]["field"].setdefault("px_per_ft", defaults["px_per_ft"])
-    img = config_obj["pyfrc"]["field"].setdefault("image", defaults["image"])
+        config_obj["pyfrc"][sim_type]["field"].setdefault("objects", [])
+        config_obj["pyfrc"][sim_type]["field"].setdefault("w", defaults["w"])
+        config_obj["pyfrc"][sim_type]["field"].setdefault("h", defaults["h"])
+        config_obj["pyfrc"][sim_type]["field"].setdefault("px_per_ft", defaults["px_per_ft"])
+        img = config_obj["pyfrc"][sim_type]["field"].setdefault("image", defaults["image"])
+
+        config_obj["pyfrc"][sim_type]["field"].setdefault(
+            "auto_joysticks", defaults.get("auto_joysticks", False)
+        )
+
+        if img and not isabs(config_obj["pyfrc"][sim_type]["field"]["image"]):
+            config_obj["pyfrc"][sim_type]["field"]["image"] = abspath(join(sim_path, img))
 
     config_obj["pyfrc"].setdefault(
         "game_specific_messages", defaults.get("game_specific_messages", [])
     )
-    config_obj["pyfrc"]["field"].setdefault(
-        "auto_joysticks", defaults.get("auto_joysticks", False)
-    )
-    assert isinstance(config_obj["pyfrc"]["game_specific_messages"], (list, type(None)))
 
-    if img and not isabs(config_obj["pyfrc"]["field"]["image"]):
-        config_obj["pyfrc"]["field"]["image"] = abspath(join(sim_path, img))
+    assert isinstance(config_obj["pyfrc"]["game_specific_messages"], (list, type(None)))
 
     config_obj["pyfrc"].setdefault("analog", {})
     config_obj["pyfrc"].setdefault("CAN", {})

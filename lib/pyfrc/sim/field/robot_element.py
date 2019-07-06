@@ -12,14 +12,16 @@ class RobotElement(CompositeElement):
 
         super().__init__()
 
-        # Load params from the user's sim/config.json
-        px_per_ft = config_obj["pyfrc"]["field"]["px_per_ft"]
+        sim_type = config_obj["pyfrc"]["sim_type"]
 
-        robot_w = config_obj["pyfrc"]["robot"]["w"]
-        robot_l = config_obj["pyfrc"]["robot"]["l"]
-        center_x = config_obj["pyfrc"]["robot"]["starting_x"]
-        center_y = config_obj["pyfrc"]["robot"]["starting_y"]
-        angle = math.radians(config_obj["pyfrc"]["robot"]["starting_angle"])
+        # Load params from the user's sim/config.json
+        px_per_ft = config_obj["pyfrc"][sim_type]["field"]["px_per_ft"]
+
+        robot_w = config_obj["pyfrc"][sim_type]["robot"]["w"]
+        robot_l = config_obj["pyfrc"][sim_type]["robot"]["l"]
+        center_x = config_obj["pyfrc"][sim_type]["robot"]["starting_x"]
+        center_y = config_obj["pyfrc"][sim_type]["robot"]["starting_y"]
+        angle = math.radians(config_obj["pyfrc"][sim_type]["robot"]["starting_angle"])
 
         self.controller = controller
         self.controller.robot_face = 0

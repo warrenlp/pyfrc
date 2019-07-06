@@ -24,6 +24,36 @@ from pkg_resources import iter_entry_points
 logger = logging.getLogger(__name__)
 
 
+def _get_sim_callback(sim, root, selected):
+    def _fn():
+        selected[0] = sim
+        root.destroy()
+
+    return _fn
+
+
+def configure_simulation_type(config_obj):
+    sim_types = config_obj["pyfrc"]["sim_types"]
+    if len(sim_types) == 1:
+        selected = sim_types[0]
+    elif len(sim_types) >= 1:
+        root = tk.Tk()
+        root.title("Robot Simulation Type")
+
+        label = tk.Label(root, text="Choose simulation type")
+        label.pack(side="top", fill="none", expand=True)
+        selected = [sim_types[0]]
+        for sim in sim_types:
+            button = tk.Button(
+                root, text=sim, command=_get_sim_callback(sim, root, selected)
+            )
+            button.pack(side="top", fill="both", expand=True)
+        root.mainloop()
+        selected = selected[0]
+
+    config_obj["pyfrc"]["sim_type"] = selected
+
+
 def _get_pos_callback(pos, root, selected):
     def _fn():
         selected[0] = pos
@@ -33,7 +63,8 @@ def _get_pos_callback(pos, root, selected):
 
 
 def configure_starting_position(config_obj):
-    start_positions = config_obj["pyfrc"]["robot"]["start_positions"]
+    sim_type = config_obj["pyfrc"]["sim_type"]
+    start_positions = config_obj["pyfrc"][sim_type]["robot"]["start_positions"]
     if not start_positions:
         return
     if len(start_positions) == 1:
@@ -54,9 +85,9 @@ def configure_starting_position(config_obj):
         root.mainloop()
         selected = selected[0]
 
-    config_obj["pyfrc"]["robot"]["starting_x"] = selected["x"]
-    config_obj["pyfrc"]["robot"]["starting_y"] = selected["y"]
-    config_obj["pyfrc"]["robot"]["starting_angle"] = selected["angle"]
+    config_obj["pyfrc"][sim_type]["robot"]["starting_x"] = selected["x"]
+    config_obj["pyfrc"][sim_type]["robot"]["starting_y"] = selected["y"]
+    config_obj["pyfrc"][sim_type]["robot"]["starting_angle"] = selected["angle"]
 
 
 class SimUI(object):
