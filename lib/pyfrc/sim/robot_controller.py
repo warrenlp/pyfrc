@@ -141,8 +141,11 @@ class RobotController:
         """Returns x,y,angle"""
         return self.physics_controller.get_position()
 
-    def _get_vector(self):
-        return self.physics_controller._get_vector()
+    def register_element(self, name, starting_vector):
+        self.physics_controller._register_element(name, starting_vector)
+
+    def _get_vector(self, name=None):
+        return self.physics_controller._get_vector(name)
 
     #
     # Runs the code

@@ -67,11 +67,12 @@ class RobotElement(CompositeElement):
                 self.peripherals = {}
 
             for obj in objects:
+                name = obj["name"]
                 color = obj.get("color", "gray")
                 elem_center = obj["center"]
                 pts = [[pt_x * self.px_per_ft, pt_y * self.px_per_ft] for pt_x, pt_y in obj["points"]]
                 elem = DrawableElement(pts, elem_center, 0, color)
-                self.peripherals[elem] = (0.0, 0.0, 0.0)
+                self.peripherals[name] = [elem, (0.0, 0.0, 0.0)]
 
     @property
     def angle(self):
@@ -88,8 +89,11 @@ class RobotElement(CompositeElement):
 
     def initialize(self, canvas):
         super().initialize(canvas)
-        for e in self.peripherals:
-            e.initialize(canvas)
+        if hasattr(self, 'peripherals'):
+            for name in self.peripherals:
+                e, starting_vector = self.peripherals[name]
+                e.initialize(canvas)
+                self.controller.register_element(name, starting_vector)
 
     def perform_move(self):
 
@@ -99,13 +103,11 @@ class RobotElement(CompositeElement):
         # query the controller for move information
         self.move_robot()
 
-        if self.peripherals:
-            self.move_peripherals()
-
-        # finally, call the superclass to actually do the drawing
+        # Call the superclass to actually do the drawing
         self.update_coordinates()
 
-        if self.peripherals:
+        if hasattr(self, 'peripherals'):
+            self.move_peripherals()
             self.update_peripheral_coordinates()
 
     def move_robot(self):
@@ -129,28 +131,29 @@ class RobotElement(CompositeElement):
 
     def move_peripherals(self):
 
-        for peripheral in self.peripherals.keys():
-            # x, y, a = self.controller._get_vector(peripheral.id)
-            x, y, a = self.peripherals[peripheral]
-            ox, oy, oa = self.peripherals[peripheral]
+        for name in self.peripherals:
+            e, vector = self.peripherals[name]
+            x, y, a = self.controller._get_vector(name)
+            ox, oy, oa = vector
 
             # x *= self.px_per_ft
             # y *= self.px_per_ft
 
-            x += 0.5
-            y += 0.5
+            # x += 0.5
+            # y += 0.5
 
             dx = x - ox
             dy = y - oy
             da = a - oa
 
             if da != 0:
-                peripheral.rotate(da)
+                e.rotate(da)
 
-            peripheral.move((dx, dy))
+            e.move((dx, dy))
 
-            self.peripherals[peripheral] = x, y, a
+            self.peripherals[name][1] = x, y, a
 
     def update_peripheral_coordinates(self):
-        for e in self.peripherals:
+        for name in self.peripherals:
+            e, _ = self.peripherals[name]
             e.update_coordinates()

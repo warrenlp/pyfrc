@@ -151,6 +151,9 @@ class PhysicsInterface:
 
         self.hal_data = hal_data
 
+        if sim_type == "profile":
+            self.elements = {}
+
         physics_module_path = join(robot_path, "physics.py")
         if exists(physics_module_path):
 
@@ -217,6 +220,9 @@ class PhysicsInterface:
 
     def _has_engine(self):
         return self.engine is not None
+
+    def _register_element(self, name, starting_vector):
+        self.elements[name] = starting_vector
 
     #######################################################
     #
@@ -358,12 +364,27 @@ class PhysicsInterface:
         angle = math.atan2(dy, dx)
         return distance, math.degrees(angle)
 
-    def _get_vector(self):
+    def _get_vector(self, name=None):
         """
             :returns: The sum of all movement vectors, not very useful
                       except for getting the difference of them
         """
-        return self.vx, self.vy, self.angle
+        if name is None:
+            return self.vx, self.vy, self.angle
+        else:
+            return self.elements[name]
+
+    def update_element_position(self, name, x, y, angle):
+        # if the robot is disabled, don't do anything
+        if not self.robot_enabled:
+            return
+
+        with self._lock:
+            elem_x, elem_y, elem_angle = self.elements[name]
+            # print(f"Old position: {elem_x}, {elem_y}, {elem_angle}")
+            new_elem_x, new_elem_y, new_elem_angle = elem_x + x, elem_y + y, elem_angle + angle
+            # print(f"New position: {new_elem_x}, {new_elem_y}, {new_elem_angle}")
+            self.elements[name] = (new_elem_x, new_elem_y, new_elem_angle)
 
     def reset_position(self):
         with self._lock:
