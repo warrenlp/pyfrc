@@ -72,12 +72,11 @@ class RobotField(object):
                 rect = obj.get("rect")
                 if rect:
                     x, y, w, h = rect
-                    obj["points"] = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
-
+                    obj["points"] = [(x, h + y), (x + w, h + y), (x + w, y), (x, y)]
                 pts = [
                     (
                         self.margin + int(pt[0] * px_per_ft),
-                        self.margin + int(pt[1] * px_per_ft),
+                        self.margin + int((self.rows - pt[1]) * px_per_ft),
                     )
                     for pt in obj["points"]
                 ]

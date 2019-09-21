@@ -16,11 +16,12 @@ class RobotElement(CompositeElement):
 
         # Load params from the user's sim/config.json
         px_per_ft = config_obj["pyfrc"][self.sim_type]["field"]["px_per_ft"]
+        self.field_height = config_obj["pyfrc"][self.sim_type]["field"]["h"]
 
         robot_w = config_obj["pyfrc"][self.sim_type]["robot"]["w"]
         robot_l = config_obj["pyfrc"][self.sim_type]["robot"]["l"]
         center_x = config_obj["pyfrc"][self.sim_type]["robot"]["starting_x"]
-        center_y = config_obj["pyfrc"][self.sim_type]["robot"]["starting_y"]
+        center_y = self.field_height - config_obj["pyfrc"][self.sim_type]["robot"]["starting_y"]
         angle = math.radians(config_obj["pyfrc"][self.sim_type]["robot"]["starting_angle"])
 
         self.controller = controller
@@ -118,6 +119,8 @@ class RobotElement(CompositeElement):
         x *= self.px_per_ft
         y *= self.px_per_ft
 
+        y = self.field_height - y
+
         dx = x - ox
         dy = y - oy
         da = a - oa
@@ -132,15 +135,12 @@ class RobotElement(CompositeElement):
     def move_peripherals(self):
 
         for name in self.peripherals:
-            e, vector = self.peripherals[name]
-            x, y, a = self.controller._get_vector(name)
-            ox, oy, oa = vector
+            e, position_vector = self.peripherals[name]  # Element position, units: px
+            ox, oy, oa = position_vector
+            x, y, a = self.controller._get_vector(name)  # Robot/PhysicsController position, units: ft
 
-            # x *= self.px_per_ft
-            # y *= self.px_per_ft
-
-            # x += 0.5
-            # y += 0.5
+            x *= self.px_per_ft
+            y *= self.px_per_ft
 
             dx = x - ox
             dy = y - oy
