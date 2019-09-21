@@ -32,7 +32,7 @@ class RobotField(object):
 
         # setup board characteristics -- cell size is 1ft
         self.cols, self.rows = field_size
-        self.margin = 5
+        self.margin = config_obj["field_drawing_margin"]
         self.objects = config_obj["pyfrc"][sim_type]["field"]["objects"]
         self.cellSize = px_per_ft
         self.px_per_ft = px_per_ft

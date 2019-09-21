@@ -139,8 +139,8 @@ class PhysicsInterface:
         self.robot_l = config_obj["pyfrc"][sim_type]["robot"]["l"]
 
         # HACK: Used for drawing
-        self.vx = 0
-        self.vy = 0
+        self.vx = self.start_x
+        self.vy = self.start_y
 
         self.fake_time = fake_time
         self.robot_enabled = False
@@ -289,7 +289,6 @@ class PhysicsInterface:
            :param vw: Clockwise rotational speed in rad/s
            :param tm_diff:         Amount of time speed was traveled
         """
-
         # if the robot is disabled, don't do anything
         if not self.robot_enabled:
             return

@@ -17,11 +17,15 @@ class RobotElement(CompositeElement):
         # Load params from the user's sim/config.json
         px_per_ft = config_obj["pyfrc"][self.sim_type]["field"]["px_per_ft"]
         self.field_height = config_obj["pyfrc"][self.sim_type]["field"]["h"]
+        self.field_drawing_margin = config_obj["field_drawing_margin"]
 
         robot_w = config_obj["pyfrc"][self.sim_type]["robot"]["w"]
         robot_l = config_obj["pyfrc"][self.sim_type]["robot"]["l"]
         center_x = config_obj["pyfrc"][self.sim_type]["robot"]["starting_x"]
-        center_y = self.field_height - config_obj["pyfrc"][self.sim_type]["robot"]["starting_y"]
+        center_y = config_obj["pyfrc"][self.sim_type]["robot"]["starting_y"]
+        # For the profile simulation the y-axis points up which is opposite of the tkinter y-axis.
+        if self.sim_type == "profile":
+            center_y = self.field_height - center_y
         angle = math.radians(config_obj["pyfrc"][self.sim_type]["robot"]["starting_angle"])
 
         self.controller = controller
@@ -34,7 +38,7 @@ class RobotElement(CompositeElement):
         center_y *= px_per_ft
 
         # drawing hack
-        self._vector = (0, 0, angle)
+        self._vector = (center_x, center_y, angle)
 
         # create a bunch of drawable objects that represent the robot
         center = (center_x, center_y)
@@ -45,6 +49,8 @@ class RobotElement(CompositeElement):
             (center_x - robot_w / 2, center_y + robot_l / 2),
         ]
 
+        pts = [(pt[0] + self.field_drawing_margin, pt[1] + self.field_drawing_margin) for pt in pts]
+
         robot = DrawableElement(pts, center, 0, "red")
         self.elements.append(robot)
 
@@ -54,13 +60,15 @@ class RobotElement(CompositeElement):
             (center_x - robot_w / 2, center_y + robot_l / 2),
         ]
 
+        pts = [(pt[0] + self.field_drawing_margin, pt[1] + self.field_drawing_margin) for pt in pts]
+
         robot_pt = DrawableElement(pts, center, 0, "green")
         self.elements.append(robot_pt)
 
         if angle != 0:
             self.rotate(angle)
 
-        # Add peripherals to robot if included with robot
+        # Add peripherals to robot in profile simulation if they are included with robot
         if self.sim_type == "profile":
             objects = config_obj["pyfrc"][self.sim_type]["robot"].get("objects")
 
@@ -113,16 +121,17 @@ class RobotElement(CompositeElement):
 
     def move_robot(self):
 
-        x, y, a = self.controller._get_vector()  # units: ft
+        vx, vy, a = self.controller._get_vector()  # units: ft
         ox, oy, oa = self._vector  # units: px
 
-        x *= self.px_per_ft
-        y *= self.px_per_ft
+        if self.sim_type == "profile":
+            vy = self.field_height - vy
 
-        y = self.field_height - y
+        vx *= self.px_per_ft
+        vy *= self.px_per_ft
 
-        dx = x - ox
-        dy = y - oy
+        dx = vx - ox
+        dy = vy - oy
         da = a - oa
 
         if da != 0:
@@ -130,7 +139,7 @@ class RobotElement(CompositeElement):
 
         self.move((dx, dy))
 
-        self._vector = x, y, a
+        self._vector = vx, vy, a
 
     def move_peripherals(self):
 

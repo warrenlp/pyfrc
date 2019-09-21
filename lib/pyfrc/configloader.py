@@ -64,6 +64,7 @@ def _load_config(robot_path):
         logger.warning("sim/config.json not found, using default simulation parameters")
 
     config_obj["simpath"] = sim_path
+    config_obj["field_drawing_margin"] = 5
 
     # setup defaults
     config_obj.setdefault("pyfrc", {})
