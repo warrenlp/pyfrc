@@ -70,18 +70,22 @@ class RobotElement(CompositeElement):
 
         # Add peripherals to robot in profile simulation if they are included with robot
         if self.sim_type == "profile":
-            objects = config_obj["pyfrc"][self.sim_type]["robot"].get("objects")
+            robot_objects = config_obj["pyfrc"][self.sim_type]["robot"].get("objects")
 
-            if objects:
+            if robot_objects:
                 self.peripherals = {}
 
-            for obj in objects:
+            for obj in robot_objects:
                 name = obj["name"]
                 color = obj.get("color", "gray")
-                elem_center = obj["center"]
-                pts = [[pt_x * self.px_per_ft, pt_y * self.px_per_ft] for pt_x, pt_y in obj["points"]]
+                elem_center = [self.field_drawing_margin + (obj["center"][0] * self.px_per_ft),
+                                self.field_drawing_margin + (self.field_height - obj["center"][1]) * self.px_per_ft]
+                pts = [[self.field_drawing_margin + (pt_x * self.px_per_ft),
+                        self.field_drawing_margin + (self.field_height - pt_y) * self.px_per_ft]
+                       for pt_x, pt_y in obj["points"]]
+                # DrawableElements have tkinter coords
                 elem = DrawableElement(pts, elem_center, 0, color)
-                self.peripherals[name] = [elem, (0.0, 0.0, 0.0)]
+                self.peripherals[name] = [elem, (obj["center"][0], obj["center"][1], 0.0)]
 
     @property
     def angle(self):
@@ -102,7 +106,11 @@ class RobotElement(CompositeElement):
             for name in self.peripherals:
                 e, starting_vector = self.peripherals[name]
                 e.initialize(canvas)
-                self.controller.register_element(name, starting_vector)
+                # Robot/PhysicsController have "real-world" coords
+                x, y, a = starting_vector
+                x = x / self.px_per_ft
+                y = y / self.px_per_ft
+                self.controller.register_element(name, (x, y, a))
 
     def perform_move(self):
 
@@ -145,11 +153,14 @@ class RobotElement(CompositeElement):
 
         for name in self.peripherals:
             e, position_vector = self.peripherals[name]  # Element position, units: px
-            ox, oy, oa = position_vector
+            ox, oy, oa = position_vector  # units: px
             x, y, a = self.controller._get_vector(name)  # Robot/PhysicsController position, units: ft
 
-            x *= self.px_per_ft
-            y *= self.px_per_ft
+            x *= self.px_per_ft  # units: px
+            y *= self.px_per_ft  # units: px
+
+            if self.sim_type == "profile":
+                y = self.field_height - y
 
             dx = x - ox
             dy = y - oy
@@ -158,6 +169,7 @@ class RobotElement(CompositeElement):
             if da != 0:
                 e.rotate(da)
 
+            # print(f"Move dx, dy: {dx}, {dy}")
             e.move((dx, dy))
 
             self.peripherals[name][1] = x, y, a

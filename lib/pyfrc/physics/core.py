@@ -379,12 +379,12 @@ class PhysicsInterface:
             return
 
         with self._lock:
-            # elem_x, elem_y, elem_angle = self.elements[name]
+            elem_x, elem_y, elem_angle = self.elements[name]
             # print(f"Old position: {elem_x}, {elem_y}, {elem_angle}")
-            # new_elem_x, new_elem_y, new_elem_angle = elem_x + x, elem_y + y, elem_angle + angle
+            new_elem_x, new_elem_y, new_elem_angle = elem_x + x, elem_y + y, elem_angle + angle
             # print(f"New position: {new_elem_x}, {new_elem_y}, {new_elem_angle}")
             # self.elements[name] = (new_elem_x, new_elem_y, new_elem_angle)
-            self.elements[name] = (x, y, angle)
+            self.elements[name] = (new_elem_x, new_elem_y, new_elem_angle)
 
     def reset_position(self):
         with self._lock:
