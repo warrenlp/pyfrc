@@ -41,6 +41,8 @@ class RobotElement(CompositeElement):
         self._vector = (center_x, center_y, angle)
 
         # create a bunch of drawable objects that represent the robot
+        center_x += self.field_drawing_margin
+        center_y += self.field_drawing_margin
         center = (center_x, center_y)
         pts = [
             (center_x - robot_w / 2, center_y - robot_l / 2),
@@ -48,8 +50,6 @@ class RobotElement(CompositeElement):
             (center_x + robot_w / 2, center_y + robot_l / 2),
             (center_x - robot_w / 2, center_y + robot_l / 2),
         ]
-
-        pts = [(pt[0] + self.field_drawing_margin, pt[1] + self.field_drawing_margin) for pt in pts]
 
         robot = DrawableElement(pts, center, 0, "red")
         self.elements.append(robot)
@@ -59,8 +59,6 @@ class RobotElement(CompositeElement):
             (center_x + robot_w / 2, center_y),
             (center_x - robot_w / 2, center_y + robot_l / 2),
         ]
-
-        pts = [(pt[0] + self.field_drawing_margin, pt[1] + self.field_drawing_margin) for pt in pts]
 
         robot_pt = DrawableElement(pts, center, 0, "green")
         self.elements.append(robot_pt)
@@ -79,13 +77,13 @@ class RobotElement(CompositeElement):
                 name = obj["name"]
                 color = obj.get("color", "gray")
                 elem_center = [self.field_drawing_margin + (obj["center"][0] * self.px_per_ft),
-                                self.field_drawing_margin + (self.field_height - obj["center"][1]) * self.px_per_ft]
+                               self.field_drawing_margin + (self.field_height - obj["center"][1]) * self.px_per_ft]
                 pts = [[self.field_drawing_margin + (pt_x * self.px_per_ft),
                         self.field_drawing_margin + (self.field_height - pt_y) * self.px_per_ft]
                        for pt_x, pt_y in obj["points"]]
                 # DrawableElements have tkinter coords
                 elem = DrawableElement(pts, elem_center, 0, color)
-                self.peripherals[name] = [elem, (obj["center"][0], obj["center"][1], 0.0)]
+                self.peripherals[name] = [elem, (elem_center[0], elem_center[1], 0.0)]
 
     @property
     def angle(self):
@@ -108,8 +106,8 @@ class RobotElement(CompositeElement):
                 e.initialize(canvas)
                 # Robot/PhysicsController have "real-world" coords
                 x, y, a = starting_vector
-                x = x / self.px_per_ft
-                y = y / self.px_per_ft
+                x = (x - self.field_drawing_margin) / self.px_per_ft
+                y = self.field_height - (y - self.field_drawing_margin) / self.px_per_ft
                 self.controller.register_element(name, (x, y, a))
 
     def perform_move(self):
@@ -156,20 +154,26 @@ class RobotElement(CompositeElement):
             ox, oy, oa = position_vector  # units: px
             x, y, a = self.controller._get_vector(name)  # Robot/PhysicsController position, units: ft
 
-            x *= self.px_per_ft  # units: px
-            y *= self.px_per_ft  # units: px
-
             if self.sim_type == "profile":
                 y = self.field_height - y
 
+            x *= self.px_per_ft  # units: px
+            y *= self.px_per_ft  # units: px
+
+            x += self.field_drawing_margin
+            y += self.field_drawing_margin
+
             dx = x - ox
+            if name == "front_wheel":
+                print(f"front_wheel: y, oy: {y}, {oy}")
             dy = y - oy
             da = a - oa
 
             if da != 0:
                 e.rotate(da)
 
-            # print(f"Move dx, dy: {dx}, {dy}")
+            if name == "front_wheel":
+                print(f"Move front_wheel dx, dy: {dx}, {dy}")
             e.move((dx, dy))
 
             self.peripherals[name][1] = x, y, a
